@@ -1,68 +1,73 @@
 // src/app/quiz/[id]/page.js
+// This is a Server Component for individual quiz pages.
 
-// Import necessary modules
-import { quizzes as allQuizzesData, categories as allCategoriesData, quizDetails as allQuizDetailsData } from '../../../data/quizzes'; // Corrected path to src/data/quizzes.js
+import { getQuizByIdWithCategory } from '../../../data/quizzes';
 import QuizClient from '../../components/QuizClient';
-import { notFound } from 'next/navigation'; // Import notFound for handling missing quizzes
+import Link from 'next/link';
 
-// 1. generateStaticParams (Optional but recommended for better performance)
-// This function tells Next.js which dynamic segments ([category]) to pre-render
 export async function generateStaticParams() {
-  return allQuizzesData.map((quiz) => ({
-    id: quiz.id, // For the [id] segment
-  }));
+  const { categories } = await import('../../../data/quizzes');
+  const params = [];
+  categories.forEach(category => {
+    category.quizzes.forEach(quiz => {
+      params.push({
+        id: quiz.id,
+      });
+    });
+  });
+  return params;
 }
 
-// 2. generateMetadata
-// This allows you to set dynamic <title> and <meta> tags for each quiz page.
 export async function generateMetadata({ params }) {
-  // Await params before accessing its properties
-  const awaitedParams = await params; // Add this line
-  const quizId = awaitedParams.id;    // Use awaitedParams
+  await Promise.resolve();
 
-  const quiz = allQuizDetailsData[quizId]; // Access details directly from imported data
+  // --- CHANGE STARTS HERE ---
+  const id = params.id; // Access directly
+  // --- CHANGE ENDS HERE ---
 
-  if (!quiz) {
-    // If quiz is not found, return default metadata or indicate not found
+  const result = getQuizByIdWithCategory(id);
+
+  if (!result || !result.quiz) {
     return {
-      title: 'Quiz Not Found',
-      description: 'The requested quiz does not exist.',
+      title: 'Quiz Not Found - QuizWarts',
     };
   }
-
   return {
-    title: quiz.title,
-    description: `Take a quiz on ${quiz.title}. Test your knowledge!`,
+    title: `${result.quiz.title} - QuizWarts`,
+    description: result.quiz.description || `Take the ${result.quiz.title} quiz.`,
   };
 }
 
-// 3. QuizPage Component (Server Component)
-// This component fetches the quiz data on the server and passes it to the client component.
-export default async function QuizPage({ params }) {
-  // Await params here as well
-  const awaitedParams = await params; // Add this line
-  const quizId = awaitedParams.id;    // Use awaitedParams
 
-  // Fetch quiz data (simulate API call, though we are using mock data directly)
-  // In a real application, this would be a fetch to an actual API endpoint.
-  // For now, we'll directly access the mock data.
+export default async function SingleQuizPage({ params }) {
+  await Promise.resolve();
 
-  // Simulate an API call delay if you want to test loading states
-  // await new Promise(resolve => setTimeout(resolve, 500));
+  // --- CHANGE STARTS HERE ---
+  const id = params.id; // Access directly
+  // --- CHANGE ENDS HERE ---
 
-  const quiz = allQuizDetailsData[quizId];
+  const result = getQuizByIdWithCategory(id);
 
-  if (!quiz) {
-    notFound(); // Next.js built-in notFound function for 404
+  if (!result || !result.quiz) {
+    return (
+      <div className="text-center py-10">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Quiz Not Found</h1>
+        <p className="text-gray-600 dark:text-gray-400">The quiz you are looking for does not exist.</p>
+        <Link href="/" className="mt-6 inline-block text-blue-600 hover:underline dark:text-blue-400">
+          Go to Home
+        </Link>
+      </div>
+    );
   }
 
-  // Pass the fetched quiz data as props to the client component
+  const { quiz, categoryId } = result;
+
+  const quizForClient = {
+    ...quiz,
+    categoryId: categoryId,
+  };
+
   return (
-    <main className="p-4 sm:ml-64">
-      <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
-        {/* Render the Client Quiz component, passing the initial data */}
-        <QuizClient initialQuizData={quiz} />
-      </div>
-    </main>
+    <QuizClient initialQuizData={quizForClient} />
   );
 }

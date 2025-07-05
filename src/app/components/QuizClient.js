@@ -1,19 +1,20 @@
 // src/app/components/QuizClient.js
-'use client'; // This directive makes this a Client Component
+'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link'; // For client-side navigation
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 export default function QuizClient({ initialQuizData }) {
-  // State to hold the current quiz data, questions, user progress, and score
   const [quiz, setQuiz] = useState(initialQuizData);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [userAnswers, setUserAnswers] = useState(
+    Array(initialQuizData.questions.length).fill(null)
+  );
 
-  // Effect to reset quiz state when a new quiz is loaded (e.g., navigating between quiz pages)
   useEffect(() => {
     setQuiz(initialQuizData);
     setCurrentQuestionIndex(0);
@@ -21,121 +22,191 @@ export default function QuizClient({ initialQuizData }) {
     setShowFeedback(false);
     setScore(0);
     setQuizCompleted(false);
-  }, [initialQuizData.id]); // Dependency array: re-run if initialQuizData.id changes
+    setUserAnswers(Array(initialQuizData.questions.length).fill(null));
+  }, [initialQuizData.id, initialQuizData.questions.length]);
 
-  // Basic check for valid quiz data
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
-    return <p className="text-center text-red-500">Error: Quiz data is missing or empty.</p>;
+    return (
+      // This div will also now inherit the dark background from layout.js
+      <div className="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">
+        <p className="text-center text-red-500 text-xl font-semibold">Error: Quiz data is missing or empty.</p>
+      </div>
+    );
   }
 
-  // Get the current question based on the index
   const currentQuestion = quiz.questions[currentQuestionIndex];
 
-  // Handler for when a user selects an answer
   const handleAnswerSelect = (option) => {
-    // Prevent changing answer if feedback is already being shown
-    if (showFeedback) return;
+    if (userAnswers[currentQuestionIndex] !== null && showFeedback) return;
 
-    setSelectedAnswer(option); // Set the user's selected answer
-    setShowFeedback(true); // Show immediate feedback
+    setSelectedAnswer(option);
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestionIndex] = option;
+    setUserAnswers(newAnswers);
 
-    // Check if the selected answer is correct and update score
-    if (option === currentQuestion.correctAnswer) {
-      setScore((prevScore) => prevScore + 1);
-    }
+    setShowFeedback(true);
+
+    const calculatedScore = newAnswers.reduce((acc, answer, index) => {
+      return acc + (answer === quiz.questions[index].correctAnswer ? 1 : 0);
+    }, 0);
+    setScore(calculatedScore);
   };
 
-  // Handler for moving to the next question or finishing the quiz
-  const handleNextQuestion = () => {
-    setShowFeedback(false); // Hide feedback for the next question
-    setSelectedAnswer(null); // Clear selected answer
+  const handleNavigation = useCallback((direction) => {
+    setShowFeedback(false);
+    setSelectedAnswer(null);
 
-    // Check if there are more questions
-    if (currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex + 1); // Move to next question
-    } else {
-      setQuizCompleted(true); // All questions answered, quiz is complete
+    let newIndex = currentQuestionIndex;
+    if (direction === 'next') {
+      newIndex = currentQuestionIndex + 1;
+    } else if (direction === 'prev') {
+      newIndex = currentQuestionIndex - 1;
     }
-  };
 
-  // Helper function to apply dynamic Tailwind CSS classes based on answer state
+    if (newIndex >= 0 && newIndex < quiz.questions.length) {
+      setCurrentQuestionIndex(newIndex);
+      if (userAnswers[newIndex] !== null) {
+        setSelectedAnswer(userAnswers[newIndex]);
+        setShowFeedback(true);
+      }
+    } else if (newIndex >= quiz.questions.length) {
+      setQuizCompleted(true);
+    }
+  }, [currentQuestionIndex, quiz.questions.length, userAnswers]);
+
   const getOptionClasses = (option) => {
-    let classes = 'block w-full text-left p-4 border rounded-lg transition-colors duration-200 ';
-    if (showFeedback) {
-      // If feedback is showing, highlight correct/incorrect answers
+    let baseClasses = 'block w-full text-left py-2 px-4 border rounded-lg transition-all duration-200 text-lg ';
+    const isAnswered = userAnswers[currentQuestionIndex] !== null;
+
+    if (isAnswered) {
       if (option === currentQuestion.correctAnswer) {
-        classes += 'bg-green-100 border-green-500 dark:bg-green-800 dark:border-green-600'; // Correct answer
-      } else if (selectedAnswer === option) {
-        classes += 'bg-red-100 border-red-500 dark:bg-red-800 dark:border-red-600'; // Incorrectly selected
+        baseClasses += 'bg-green-100 border-green-500 text-green-800 dark:bg-green-700 dark:border-green-600 dark:text-green-100 ring-2 ring-green-500';
+      } else if (userAnswers[currentQuestionIndex] === option) {
+        baseClasses += 'bg-red-100 border-red-500 text-red-800 dark:bg-red-700 dark:border-red-600 dark:text-red-100 ring-2 ring-red-500';
       } else {
-        classes += 'bg-white border-gray-300 dark:bg-gray-700 dark:border-gray-600 opacity-60'; // Unselected after feedback
+        baseClasses += 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 opacity-70 cursor-not-allowed';
       }
     } else {
-      // Before feedback, apply hover styles and highlight the currently selected option
-      classes += 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600';
+      baseClasses += 'bg-white border-gray-300 text-gray-800 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600';
       if (selectedAnswer === option) {
-        classes += ' ring-2 ring-blue-500'; // Highlight selected before feedback
+        baseClasses += ' ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-900/50';
       }
     }
-    return classes;
+    return baseClasses;
   };
+
+  const displayCategoryName = quiz.categoryId
+    ? quiz.categoryId.charAt(0).toUpperCase() + quiz.categoryId.slice(1).replace(/-/g, ' ')
+    : 'Category';
+
+  const isCurrentQuestionAnswered = userAnswers[currentQuestionIndex] !== null;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white text-center">{quiz.title}</h1>
-
-      {quizCompleted ? (
-        // Display quiz completion screen and score
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Quiz Completed!</h2>
-          <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Your score: **{score}** out of **{quiz.questions.length}**</p>
-          <Link href="/" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Go to Home
-          </Link>
-          {/* Link back to the specific category page */}
-          <Link href={`/quizzes/${quiz.categoryId}`} className="ml-4 inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600">
-            More Quizzes in {quiz.categoryId.charAt(0).toUpperCase() + quiz.categoryId.slice(1)}
-          </Link>
-        </div>
-      ) : (
-        // Display current question and answer options
-        <div>
-          <p className="text-lg mb-4 text-gray-600 dark:text-gray-400">Question {currentQuestionIndex + 1} of {quiz.questions.length}</p>
-          <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">{currentQuestion.text}</h2>
-
-          <div className="space-y-4">
-            {currentQuestion.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(option)}
-                disabled={showFeedback} // Disable buttons once an answer is selected for feedback
-                className={getOptionClasses(option)}
-              >
-                {option}
-              </button>
-            ))}
+    // **CHANGED:** Removed 'bg-gray-50' to force a consistent dark background from layout.js
+    // This div will now perfectly blend with the gray-900 from layout.js
+    <div className="flex justify-center items-center py-6 px-3 sm:px-6 lg:px-8 bg-gray-900 min-h-[calc(100vh-68px)]">
+      {/* Quiz Card - This maintains its white background in light mode and dark background in dark mode */}
+      <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 transform transition-all duration-300 ease-in-out">
+        {quizCompleted ? (
+          // Quiz Completion Screen
+          <div className="text-center py-8">
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Quiz Completed! 🎉</h2>
+            <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
+              Your score: <span className="font-bold text-blue-600 dark:text-blue-400">{score}</span> out of <span className="font-bold text-blue-600 dark:text-blue-400">{quiz.questions.length}</span>
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <Link href="/" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2 2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Go to Home
+              </Link>
+              {quiz.categoryId && (
+                <Link
+                  href={`/quizzes/${quiz.categoryId}`}
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                  More Quizzes in {displayCategoryName}
+                </Link>
+              )}
+            </div>
           </div>
+        ) : (
+          // Current Question Display
+          <div className="flex flex-col h-full">
+            <h1 className="text-3xl font-extrabold mb-6 text-gray-900 dark:text-white text-center">
+              {quiz.title}
+            </h1>
 
-          {/* Feedback section (visible after an answer is selected) */}
-          {showFeedback && (
-            <div className={`mt-6 p-4 rounded-lg ${selectedAnswer === currentQuestion.correctAnswer ? 'bg-green-50 dark:bg-green-900' : 'bg-red-50 dark:bg-red-900'} text-center`}>
-              <p className={`font-semibold text-lg ${selectedAnswer === currentQuestion.correctAnswer ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
-                {selectedAnswer === currentQuestion.correctAnswer ? 'Correct!' : 'Incorrect!'}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                The correct answer was: **{currentQuestion.correctAnswer}**
-              </p>
-              {/* Button to move to the next question or finish the quiz */}
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 mb-5">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
+              ></div>
+            </div>
+
+            <p className="text-lg mb-5 text-gray-600 dark:text-gray-400 font-medium">
+              Question {currentQuestionIndex + 1} of {quiz.questions.length}
+            </p>
+            <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white leading-relaxed flex-grow">
+              {currentQuestion.text}
+            </h2>
+
+            <div className="space-y-3 mb-6">
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(option)}
+                  disabled={isCurrentQuestionAnswered && showFeedback}
+                  className={getOptionClasses(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+
+            {/* Navigation Buttons (Next/Previous) */}
+            <div className="flex justify-between gap-3 mt-auto">
               <button
-                onClick={handleNextQuestion}
-                className="mt-4 inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={() => handleNavigation('prev')}
+                disabled={currentQuestionIndex === 0}
+                className={`inline-flex items-center px-5 py-2 border border-gray-300 text-base font-medium rounded-xl shadow-sm text-gray-700 dark:text-gray-200 dark:border-gray-600 transition-colors transform active:scale-95
+                  ${currentQuestionIndex === 0
+                    ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-60'
+                    : 'bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                  }`
+                }
               >
-                {currentQuestionIndex < quiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                <svg className="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Previous
+              </button>
+
+              <button
+                onClick={() => handleNavigation('next')}
+                disabled={!isCurrentQuestionAnswered}
+                className={`inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-xl shadow-sm text-white transition-colors transform active:scale-95
+                  ${!isCurrentQuestionAnswered
+                    ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-60'
+                    : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  }`
+                }
+              >
+                {currentQuestionIndex < quiz.questions.length - 1 ? (
+                  <>
+                    Next Question
+                    <svg className="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                  </>
+                ) : (
+                  <>
+                    Finish Quiz
+                    <svg className="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                  </>
+                )}
               </button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

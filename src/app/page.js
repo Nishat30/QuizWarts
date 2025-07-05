@@ -1,54 +1,51 @@
 // src/app/page.js
-// This is a Server Component (no 'use client' needed here).
-// It will be Statically Generated (SSG) at build time.
-
+import Image from 'next/image'; // Make sure you import Image if you use it
 import Link from 'next/link';
-// We don't need to import categories here anymore because the layout fetches them
-// and the main content of this page doesn't directly use them, only the Link component.
-// The categories for the sidebar are passed to ClientNavbarAndSidebar in layout.js.
+import { categories } from '../data/quizzes'; // Adjust path if necessary
 
-// Metadata for this specific page (overrides default metadata from layout.js)
-export const metadata = {
-  title: 'Home - Micro-Quiz Platform', // Specific title for the home page
-  description: 'Discover and take short quizzes on various topics like History, Science, and Programming.',
-};
-
-export default async function HomePage() {
-  // Since categories are now passed to ClientNavbarAndSidebar in layout.js,
-  // and this page's main content is just links, we don't strictly need to
-  // fetch/import categories here again if they are only used for navigation.
-  // However, if you want to display the categories directly on the page,
-  // you would import them here as well. For now, let's assume they are displayed via layout.
-
-  // To display them on the page itself (as per the requirement "list available quiz categories"):
-  // You would need to import `categories` from `../data/quizzes` here as well.
-  // Let's add that back to fulfill the requirement explicitly.
-  const { categories } = await import('../data/quizzes'); // Dynamic import for Server Component
-
+export default function HomePage() {
   return (
-    // The main content area. The 'sm:ml-64' class pushes content to the right
-    // to make space for the fixed sidebar.
-    <main className="p-4 sm:ml-64">
-      {/* Container for the main content, mimicking Flowbite's content area styling */}
-      <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-          Explore Quiz Categories
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/quizzes/${category.id}`} // Link to the dynamic category page
-              className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 text-center"
-            >
-              <h2 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {category.name}
-              </h2>
-              {/* You can add a small image/icon here using next/image later if desired */}
-            </Link>
-          ))}
-        </div>
+    // Adjust this outer div's padding. 'py-4' is less than 'py-10' or 'py-20'
+    // 'mx-auto' for horizontal centering, 'max-w-7xl' to limit width
+    <div className="container mx-auto px-4 py-8 sm:py-10 md:py-12"> {/* Reduced padding-y */}
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 to-blue-500
+              text-transparent bg-clip-text mb-8 text-center">
+        Discover Quizzes Across Subjects
+      </h1>
+
+      <div className="mx-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10"> {/* Increased cols for more cards */}
+        {categories.map((category) => (
+          <Link key={category.id} href={`/quizzes/${category.id}`} className="block">
+            <div className="relative bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out dark:bg-gray-800 dark:border-gray-700 overflow-hidden h-full flex flex-col">
+              {/* Image with object-cover and proper dimensions */}
+              {category.imageUrl && (
+                <div className="relative w-full h-48 sm:h-40 md:h-48 lg:h-56"> {/* Fixed height for image container */}
+                  <Image
+                    src={category.imageUrl}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    style={{ objectFit: 'cover' }} // Ensures image covers the area
+                    className="rounded-t-lg"
+                    priority={true} // For images above the fold
+                  />
+                </div>
+              )}
+              <div className="p-5 flex-grow"> {/* Flex-grow to make cards same height */}
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {category.name}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {category.description}
+                </p>
+                <div className="mt-4 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 font-medium">
+                  View Quizzes &rarr;
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
-    </main>
+    </div>
   );
 }
