@@ -1,8 +1,5 @@
-// src/app/quiz/[id]/page.js
-// This is a Server Component for individual quiz pages.
-
 import { getQuizByIdWithCategory } from '../../../data/quizzes';
-import QuizClient from '../../components/QuizClient';
+import QuizClient from '../../components/QuizClient'; 
 import Link from 'next/link';
 
 export async function generateStaticParams() {
@@ -21,10 +18,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   await Promise.resolve();
 
-  // --- CHANGE STARTS HERE ---
-  const id = params.id; // Access directly
-  // --- CHANGE ENDS HERE ---
-
+  const id = params.id;
   const result = getQuizByIdWithCategory(id);
 
   if (!result || !result.quiz) {
@@ -42,10 +36,7 @@ export async function generateMetadata({ params }) {
 export default async function SingleQuizPage({ params }) {
   await Promise.resolve();
 
-  // --- CHANGE STARTS HERE ---
-  const id = params.id; // Access directly
-  // --- CHANGE ENDS HERE ---
-
+  const id = params.id;
   const result = getQuizByIdWithCategory(id);
 
   if (!result || !result.quiz) {

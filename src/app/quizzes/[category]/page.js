@@ -1,9 +1,6 @@
-// src/app/quizzes/[category]/page.js
-
 import Link from 'next/link';
 import { getCategoryById } from '../../../data/quizzes';
 
-// Generate static params for all categories at build time
 export async function generateStaticParams() {
   const { categories } = await import('../../../data/quizzes');
   return categories.map((category) => ({
@@ -11,13 +8,9 @@ export async function generateStaticParams() {
   }));
 }
 
-// Function to generate metadata for each category page
 export async function generateMetadata({ params }) {
-  await Promise.resolve(); // Keep this for consistency, though direct access might make it optional
-
-  // --- CHANGE STARTS HERE ---
-  const category = params.category; // Access directly instead of destructuring
-  // --- CHANGE ENDS HERE ---
+  await Promise.resolve();
+  const category = params.category;
 
   const categoryData = getCategoryById(category);
   if (!categoryData) {
@@ -33,11 +26,8 @@ export async function generateMetadata({ params }) {
 
 
 export default async function CategoryQuizzesPage({ params }) {
-  await Promise.resolve(); // Keep this for consistency
-
-  // --- CHANGE STARTS HERE ---
-  const category = params.category; // Access directly instead of destructuring
-  // --- CHANGE ENDS HERE ---
+  await Promise.resolve(); 
+  const category = params.category;
 
   const categoryData = getCategoryById(category);
 

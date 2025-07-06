@@ -1,15 +1,15 @@
-// src/app/components/QuizClient.js
-'use client';
+'use client'; 
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { saveQuizResult } from '../my-stats/page'; 
 
 export default function QuizClient({ initialQuizData }) {
   const [quiz, setQuiz] = useState(initialQuizData);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(0); 
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [userAnswers, setUserAnswers] = useState(
     Array(initialQuizData.questions.length).fill(null)
@@ -23,11 +23,10 @@ export default function QuizClient({ initialQuizData }) {
     setScore(0);
     setQuizCompleted(false);
     setUserAnswers(Array(initialQuizData.questions.length).fill(null));
-  }, [initialQuizData.id, initialQuizData.questions.length]);
+  }, [initialQuizData.id, initialQuizData.questions.length, initialQuizData]); 
 
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
-      // This div will also now inherit the dark background from layout.js
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">
         <p className="text-center text-red-500 text-xl font-semibold">Error: Quiz data is missing or empty.</p>
       </div>
@@ -46,10 +45,10 @@ export default function QuizClient({ initialQuizData }) {
 
     setShowFeedback(true);
 
-    const calculatedScore = newAnswers.reduce((acc, answer, index) => {
+    const currentCorrectCount = newAnswers.reduce((acc, answer, index) => {
       return acc + (answer === quiz.questions[index].correctAnswer ? 1 : 0);
     }, 0);
-    setScore(calculatedScore);
+    setScore(currentCorrectCount); 
   };
 
   const handleNavigation = useCallback((direction) => {
@@ -71,8 +70,13 @@ export default function QuizClient({ initialQuizData }) {
       }
     } else if (newIndex >= quiz.questions.length) {
       setQuizCompleted(true);
+      const finalPercentageScore = (score / quiz.questions.length) * 100;
+      const scoreToSave = isNaN(finalPercentageScore) ? 0 : finalPercentageScore;
+
+      saveQuizResult(quiz.id, scoreToSave, quiz.title);
+      console.log(`Quiz "${quiz.title}" completed with score: ${scoreToSave.toFixed(2)}%`);
     }
-  }, [currentQuestionIndex, quiz.questions.length, userAnswers]);
+  }, [currentQuestionIndex, quiz.questions.length, userAnswers, quiz.id, quiz.title, score]);
 
   const getOptionClasses = (option) => {
     let baseClasses = 'block w-full text-left py-2 px-4 border rounded-lg transition-all duration-200 text-lg ';
@@ -101,18 +105,18 @@ export default function QuizClient({ initialQuizData }) {
 
   const isCurrentQuestionAnswered = userAnswers[currentQuestionIndex] !== null;
 
+  const displayScorePercentage = quiz.questions.length > 0
+    ? ((score / quiz.questions.length) * 100).toFixed(2)
+    : '0.00';
+
   return (
-    // **CHANGED:** Removed 'bg-gray-50' to force a consistent dark background from layout.js
-    // This div will now perfectly blend with the gray-900 from layout.js
     <div className="flex justify-center items-center py-6 px-3 sm:px-6 lg:px-8 bg-gray-900 min-h-[calc(100vh-68px)]">
-      {/* Quiz Card - This maintains its white background in light mode and dark background in dark mode */}
       <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 transform transition-all duration-300 ease-in-out">
         {quizCompleted ? (
-          // Quiz Completion Screen
           <div className="text-center py-8">
             <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Quiz Completed! 🎉</h2>
             <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
-              Your score: <span className="font-bold text-blue-600 dark:text-blue-400">{score}</span> out of <span className="font-bold text-blue-600 dark:text-blue-400">{quiz.questions.length}</span>
+              Your score: <span className="font-bold text-blue-600 dark:text-blue-400">{displayScorePercentage}%</span>
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link href="/" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
@@ -131,13 +135,11 @@ export default function QuizClient({ initialQuizData }) {
             </div>
           </div>
         ) : (
-          // Current Question Display
           <div className="flex flex-col h-full">
             <h1 className="text-3xl font-extrabold mb-6 text-gray-900 dark:text-white text-center">
               {quiz.title}
             </h1>
 
-            {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 mb-5">
               <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
@@ -165,7 +167,6 @@ export default function QuizClient({ initialQuizData }) {
               ))}
             </div>
 
-            {/* Navigation Buttons (Next/Previous) */}
             <div className="flex justify-between gap-3 mt-auto">
               <button
                 onClick={() => handleNavigation('prev')}
@@ -174,8 +175,7 @@ export default function QuizClient({ initialQuizData }) {
                   ${currentQuestionIndex === 0
                     ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-60'
                     : 'bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                  }`
-                }
+                  }`}
               >
                 <svg className="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Previous
@@ -188,8 +188,7 @@ export default function QuizClient({ initialQuizData }) {
                   ${!isCurrentQuestionAnswered
                     ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-60'
                     : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-                  }`
-                }
+                  }`}
               >
                 {currentQuestionIndex < quiz.questions.length - 1 ? (
                   <>

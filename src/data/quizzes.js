@@ -1,5 +1,3 @@
-// src/data/quizzes.js
-
 export const categories = [
   // --- BIOLOGY CATEGORY ---
   {
@@ -129,7 +127,7 @@ export const categories = [
     ],
   },
 
-  // --- HISTORY CATEGORY (Expanded) ---
+  // --- HISTORY CATEGORY  ---
   {
     id: 'history',
     name: 'History',
@@ -370,9 +368,8 @@ export function getQuizByIdWithCategory(quizId) {
   for (const category of categories) {
     const foundQuiz = category.quizzes.find(quiz => quiz.id === quizId);
     if (foundQuiz) {
-      // Return both the quiz data and its parent category ID
       return { quiz: foundQuiz, categoryId: category.id };
     }
   }
-  return null; // Quiz not found
+  return null; // Quiz nhi mila
 }
