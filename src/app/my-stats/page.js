@@ -95,8 +95,8 @@ export default function MyStatsPage() {
             <p className="text-lg font-medium text-blue-700 dark:text-blue-200">Quizzes Taken</p>
             <p className="text-3xl font-bold text-white dark:text-blue-50">{totalQuizzesTaken}</p>
           </div>
-          <div className="bg-green-100 dark:bg-green-900 p-4 rounded-lg text-center">
-            <p className="text-lg font-medium text-green-700 dark:text-green-200">Average Score</p>
+          <div className="bg-green-100 dark:bg-blue-900 p-4 rounded-lg text-center">
+            <p className="text-lg font-medium text-blue-700 dark:text-blue-200">Average Score</p>
             <p className="text-3xl font-bold text-white dark:text-green-50">{averageScore}%</p>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function MyStatsPage() {
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Score Progress Over Time</h2>
         {totalQuizzesTaken === 0 ? (
           <p className="text-center text-gray-600 dark:text-gray-400 py-10">
-            No quiz data available yet. Take some quizzes to see your stats here!
+            No quiz data available yet. Take some quizzes to see your stats here!👻
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={400}>
@@ -160,7 +160,7 @@ export default function MyStatsPage() {
         <div className="mt-8 text-center">
           <button
             onClick={() => setShowClearConfirmation(true)}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+            className="px-6 py-3 bg-red-800 hover:bg-red-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
           >
             Clear All Stats
           </button>
@@ -171,7 +171,7 @@ export default function MyStatsPage() {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl max-w-sm w-full text-center">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Confirm Clear Stats</h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to clear all your quiz statistics? This action cannot be undone.</p>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to clear all your quiz statistics? This action cannot be undone.⚡</p>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleClearStats}
