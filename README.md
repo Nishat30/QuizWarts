@@ -134,4 +134,3 @@ We welcome contributions to make **QuizWarts** better! Whether it’s a bug fix,
    ```bash
    git clone https://github.com/your-username/quizwarts.git
    cd quizwarts
-  ```
