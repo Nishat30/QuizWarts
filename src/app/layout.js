@@ -25,7 +25,7 @@ export default async function RootLayout({ children }) {
           
         </ClientNavbarAndSidebar>
         <p className="text-center text-white dark:bg-gray-900 text-sm py-0 mt-0 pl-60 pb-10">
-          © 2025| Made by Nishat Khanam 🤍   
+          © 2025| Made by Shafaqun Nisa 🤍   
         </p>
       </body>
     </html>
